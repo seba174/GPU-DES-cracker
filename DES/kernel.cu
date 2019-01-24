@@ -358,13 +358,13 @@ __host__  uint64 EncryptDataHost(uint64 dataToEncrypt, uint64 desKey);
 __host__  void CreateSubKeysHost(uint64* subKeys, uint64 desKey);
 __host__ uint64 FHost(uint64 data, uint64 key);
 __host__ uint64 EncodeHost(uint64* subKeys, uint64 dataToEncrypt);
-__global__ void Crack(uint64 data, uint64 encodedData, uint64 *key, int *done, uint64 maxLenght);
+__global__ void Crack(uint64 data, uint64 encodedData, uint64 *key, bool *done, uint64 maxLenght);
 
 
 int main()
 {
 	cudaSetDeviceWrapper();
-	std::cout << "Wprowadz dlugosc klucza:" << std::endl;
+	std::cout << "Wprowadź długość klucza:" << std::endl;
 
 	int keyLenght;
 	std::cin >> keyLenght;
@@ -376,7 +376,7 @@ int main()
 
 	uint64* devKey = NULL, crackedKey;
 	int done_val = 0;
-	int *done = NULL;
+	bool *done = NULL;
 	cudaMallocWrapper((void**)&devKey, sizeof(uint64));
 	cudaMallocWrapper((void**)&done, sizeof(int));
 	cudaMemcpyWrapper(done, &done_val, sizeof(int), cudaMemcpyHostToDevice);
@@ -393,6 +393,8 @@ int main()
 	if (encryptedDataWithKeyFromGPU == encryptedData)
 	{
 		std::cout << "[GPU] Znaleziono prawidłowy klucz w czasie: " << gpuExecutionTime << " sekund" << std::endl;
+		std::cout << "Znaleziony klucz: " << crackedKey << std::endl;
+		std::cout << "Oryginalny klucz: " << desKey << std::endl;
 	}
 	else if (crackedKey == 0)
 	{
@@ -405,48 +407,50 @@ int main()
 
 
 	begin = std::chrono::system_clock::now();
-	bool cpuFound = false;
+	int keyFound = -1;
 	for (uint64 i = 0; i < maxLenght; i++)
 	{
 		uint64 currentValue = EncryptDataHost(dataToEncrypt, i);
 		if (currentValue == encryptedData)
 		{
-			cpuFound = true;
+			keyFound = i;
 			break;
 		}
 	}
 	end = std::chrono::system_clock::now();
 	auto cpuExecutionTime = (std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()) / 1000000.0;
 
-	if (cpuFound)
+	if (keyFound != -1)
 	{
 		std::cout << "[CPU] Znaleziono prawidłowy klucz w czasie: " << cpuExecutionTime << " sekund" << std::endl;
+		std::cout << "Znaleziony klucz: " << keyFound << std::endl;
+		std::cout << "Oryginalny klucz: " << desKey << std::endl;
 	}
 	else
 	{
 		std::cout << "[CPU] Nie udało się znaleźć klucza" << std::endl;
 	}
 
-	std::cout << "Czas wykonania na GPU to " << gpuExecutionTime / cpuExecutionTime << " czasu wykonania na CPU" << std::endl;
+	std::cout << "Czas wykonania na GPU to " << gpuExecutionTime / cpuExecutionTime * 100 << " % czasu wykonania na CPU" << std::endl;
 
 	cudaFree(devKey);
 	cudaFree(done);
 }
 
-__global__ void Crack(uint64 data, uint64 encodedData, uint64 *key, int *done, uint64 maxLenght)
+__global__ void Crack(uint64 data, uint64 encodedData, uint64 *key, bool *foundKey, uint64 maxLenght)
 {
-	for (uint64 i = blockIdx.x * blockDim.x + threadIdx.x; i < maxLenght; i += blockDim.x * gridDim.x)
+	for (uint64 i = blockIdx.x * blockDim.x + threadIdx.x; i <= maxLenght; i += blockDim.x * gridDim.x)
 	{
 		uint64 currentValue = EncryptData(data, i);
 		if (currentValue == encodedData)
 		{
 			*key = i;
-			*done = 1;
-			break;
+			*foundKey = false;
+			return;
 		}
-		if (*done == 1)
+		if (*foundKey == true)
 		{
-			break;
+			return;
 		}
 	}
 }
@@ -460,7 +464,8 @@ __device__ __host__ uint64 GetBit(uint64 number, int bitNumber)
 
 __device__ __host__ void SetBit(uint64* number, int bitNumber, uint64 valueToSet)
 {
-	*number ^= (-valueToSet ^ *number) & (1ULL << bitNumber);
+	*number = *number & ~(1ULL << bitNumber) | (valueToSet << bitNumber);
+	//*number ^= (-valueToSet ^ *number) & (1ULL << bitNumber);
 }
 
 __device__ __host__ uint64 CycleBitsLeftSide(uint64 value, int numberOfPlacesToShift, int bitsInValue)
