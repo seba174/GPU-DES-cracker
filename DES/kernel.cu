@@ -394,15 +394,15 @@ int main()
 	{
 		std::cout << "[GPU] Znaleziono prawidłowy klucz w czasie: " << gpuExecutionTime << " sekund" << std::endl;
 		std::cout << "Znaleziony klucz: " << crackedKey << std::endl;
-		std::cout << "Oryginalny klucz: " << desKey << std::endl;
+		std::cout << "Oryginalny klucz: " << desKey << std::endl << std::endl;
 	}
 	else if (crackedKey == 0)
 	{
-		std::cout << "[GPU] Nie udało się znaleźć klucza" << std::endl;
+		std::cout << "[GPU] Nie udało się znaleźć klucza" << std::endl << std::endl;
 	}
 	else
 	{
-		std::cout << "[GPU] Klucz nie działa - powinnien być np. " << desKey << " a znaleziono " << crackedKey << std::endl;
+		std::cout << "[GPU] Klucz nie działa - powinnien być np. " << desKey << " a znaleziono " << crackedKey << std::endl << std::endl;
 	}
 
 
