@@ -364,7 +364,7 @@ __global__ void Crack(uint64 data, uint64 encodedData, uint64 *key, bool *done, 
 int main()
 {
 	cudaSetDeviceWrapper();
-	std::cout << "Wprowadź długość klucza:" << std::endl;
+	std::cout << "Enter key lenght:" << std::endl;
 
 	int keyLenght;
 	std::cin >> keyLenght;
@@ -392,17 +392,17 @@ int main()
 	uint64 encryptedDataWithKeyFromGPU = EncryptDataHost(dataToEncrypt, crackedKey);
 	if (encryptedDataWithKeyFromGPU == encryptedData)
 	{
-		std::cout << "[GPU] Znaleziono prawidłowy klucz w czasie: " << gpuExecutionTime << " sekund" << std::endl;
-		std::cout << "Znaleziony klucz: " << crackedKey << std::endl;
-		std::cout << "Oryginalny klucz: " << desKey << std::endl << std::endl;
+		std::cout << "[GPU] Found matching key in " << gpuExecutionTime << " seconds" << std::endl;
+		std::cout << "Found key: " << crackedKey << std::endl;
+		std::cout << "Original key: " << desKey << std::endl << std::endl;
 	}
 	else if (crackedKey == 0)
 	{
-		std::cout << "[GPU] Nie udało się znaleźć klucza" << std::endl << std::endl;
+		std::cout << "[GPU] Can not find matching key!" << std::endl << std::endl;
 	}
 	else
 	{
-		std::cout << "[GPU] Klucz nie działa - powinnien być np. " << desKey << " a znaleziono " << crackedKey << std::endl << std::endl;
+		std::cout << "[GPU] Found key do not work!" << std::endl;
 	}
 
 
@@ -422,16 +422,16 @@ int main()
 
 	if (keyFound != -1)
 	{
-		std::cout << "[CPU] Znaleziono prawidłowy klucz w czasie: " << cpuExecutionTime << " sekund" << std::endl;
-		std::cout << "Znaleziony klucz: " << keyFound << std::endl;
-		std::cout << "Oryginalny klucz: " << desKey << std::endl;
+		std::cout << "[CPU] Found matching key in " << cpuExecutionTime << " sekund" << std::endl;
+		std::cout << "Found key: " << keyFound << std::endl;
+		std::cout << "Original key: " << desKey << std::endl;
 	}
 	else
 	{
-		std::cout << "[CPU] Nie udało się znaleźć klucza" << std::endl;
+		std::cout << "[CPU] Can not find matching key!" << std::endl;
 	}
 
-	std::cout << "Czas wykonania na GPU to " << gpuExecutionTime / cpuExecutionTime * 100 << " % czasu wykonania na CPU" << std::endl;
+	std::cout << "GPU solving time is " << gpuExecutionTime / cpuExecutionTime * 100 << " % CPU solving time." << std::endl;
 
 	cudaFree(devKey);
 	cudaFree(done);
